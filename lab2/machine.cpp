@@ -4,7 +4,7 @@
 #include <sstream>
 #include <string>
 #include "machine.hpp"
-#include "product.cpp"
+#include "product.hpp"
 #include "auxil/auxiliary.hpp"
 
 Machine::Machine(size_t productTypes):
@@ -44,6 +44,7 @@ size_t Machine::getWaitTime()
 void Machine::readIncomingBox(std::istream & in, size_t productTypes, size_t & idCounter)
 {
   std::string currLine;
+  getline(in, currLine);
   std::stringstream currStream(currLine);
   int incomingLength = 0;
   currStream >> incomingLength;
@@ -56,7 +57,7 @@ void Machine::readIncomingBox(std::istream & in, size_t productTypes, size_t & i
   for (size_t j = 0; j < incomingLength; ++j)
   {
     currStream >> currOper;
-    if (!aux::checkBounds(currOper, 0, productTypes))
+    if (!aux::checkBounds(currOper, 0, productTypes - 1))
     {
       throw std::logic_error(currLine);
     }
@@ -65,7 +66,7 @@ void Machine::readIncomingBox(std::istream & in, size_t productTypes, size_t & i
     waitTime_ += timeMtx_[currOper];
   }
 
-  if (!aux::checkStreams(in, currStream))
+  if (!aux::checkStreams(in, currStream) && !aux::checkStreams(in, currStream, EOF))
   {
     throw std::logic_error(currLine);
   }

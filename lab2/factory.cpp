@@ -1,7 +1,8 @@
 #include <sstream>
 #include <string>
 #include "factory.hpp"
-#include "machine.cpp"
+#include "machine.hpp"
+#include "auxil/auxiliary.hpp"
 
 Factory::Factory(std::istream & in)
 {
@@ -39,11 +40,13 @@ Factory::Factory(std::istream & in)
   }
 
   size_t idCounter = 0;
-  int productQuantity = 0;
-  size_t sumProductQuantity = 0;
-  int productOper = 0;
   for (size_t i = 0; i < machineQuantity_; ++i)
   {
     machines_[i].readIncomingBox(in, productTypes_, idCounter);
+  }
+  
+  if (idCounter > 100000)
+  {
+    throw std::logic_error(currLine);
   }
 }

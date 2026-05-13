@@ -21,7 +21,6 @@ private:
   size_t waitTime_;
   std::queue< Product > incomingBox_;
   std::vector< int > timeMtx_;
-  size_t capacity_;
 };
 
 #endif

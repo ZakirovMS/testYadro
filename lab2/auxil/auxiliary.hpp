@@ -6,7 +6,7 @@
 namespace aux
 {
   bool checkBounds(int num, int left, int right);
-  bool checkStreams(std::istream & in, std::stringstream & ss);
+  bool checkStreams(std::istream & in, std::stringstream & ss, char lastSymbol = '\n');
 }
 
 #endif
