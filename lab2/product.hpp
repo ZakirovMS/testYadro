@@ -6,7 +6,7 @@
 class Product
 {
 public:
-  Product::Product() = default;
+  Product() = default;
   Product(size_t id, size_t initOper);
   size_t getId() const;
   void execOperation();

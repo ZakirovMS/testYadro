@@ -1,15 +1,8 @@
 #ifndef OUTSTRUCT_HPP
 #define OUTSTRUCT_HPP
 #include <cstddef>
-
-struct UnifiedStruct
-{
-  std::list< EdgeStruct > prevStartProds;
-  std::list< EdgeStruct > prevFinishProds;
-  std::list< readyStruct > prevReadyProds;
-  std::list< waitStruct > prevWaitProds;
-};
-
+#include <list>
+#include <ostream>
 
 struct EdgeStruct
 {
@@ -35,20 +28,19 @@ struct waitStruct
   size_t beforeQuantity;
 };
 
-std::ostream & operator<<(std::ostream & os, const EdgeStruct & e)
+struct UnifiedStruct
 {
-  os << e.time << " " << e.id << " " << e.prodType << " " << e.machineId;
-  return os;
-}
-std::ostream & operator<<(std::ostream & os, const readyStruct & r)
-{
-  os << r.time << " " << r.id << " " << r.machineId;
-  return os;
-}
-std::ostream & operator<<(std::ostream & os, const waitStruct & w)
-{
-  os << w.time << " " << w.id << " " << w.prodType << " " << w.machineId << " " << w.beforeQuantity;
-  return os;
-}
+  std::list< EdgeStruct > finishProds;
+  std::list< EdgeStruct > startProds;
+  std::list< readyStruct > readyProds;
+  std::list< waitStruct > waitProds;
+};
+
+
+std::ostream & operator<<(std::ostream & os, const EdgeStruct & e);
+
+std::ostream & operator<<(std::ostream & os, const readyStruct & r);
+
+std::ostream & operator<<(std::ostream & os, const waitStruct & w);
 
 #endif
