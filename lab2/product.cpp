@@ -6,7 +6,7 @@ Product::Product(size_t id, size_t initOper):
   currOper_(initOper)
 {}
 
-size_t Product::getId()
+size_t Product::getId() const
 {
   return id_;
 }
@@ -16,7 +16,7 @@ void Product::execOperation()
   ++currOper_;
 }
 
-size_t Product::getOperation()
+size_t Product::getOperation() const
 {
   return currOper_;
 }

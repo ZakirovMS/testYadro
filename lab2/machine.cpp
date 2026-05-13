@@ -9,7 +9,9 @@
 
 Machine::Machine(size_t productTypes):
   timeMtx_(productTypes),
-  waitTime_(0)
+  waitTime_(0),
+  handledTime_(0),
+  isStarted_(false)
 {}
 
 void Machine::setTime(size_t operPos, int time)
@@ -28,12 +30,35 @@ void Machine::addProduct(Product nextPr)
   waitTime_ += timeMtx_[nextPr.getOperation()];
 }
 
-Product Machine::handleProduct()
+std::optional< Product > Machine::handleProduct(size_t time)
 {
+  handledTime_ += time;
   Product processed = incomingBox_.front();
-  waitTime_ -= timeMtx_[processed.getOperation()];
-  processed.execOperation();
-  return processed;
+  
+  if (handledTime_ == getTime(incomingBox_.front().getOperation()))
+  {
+    incomingBox_.pop();
+    waitTime_ -= handledTime_;
+    processed.execOperation();
+    handledTime_ = 0;
+    return processed;
+  }
+  else if (time > getTime(processed.getOperation()))
+  {
+    throw std::logic_error("Error: more time has passed than required");
+  }
+
+  return std::nullopt;
+}
+
+bool Machine::isIncomingBoxEmpty()
+{
+  return incomingBox_.empty();
+}
+
+size_t Machine::getIncomingBoxSize()
+{
+  return incomingBox_.size();
 }
 
 size_t Machine::getWaitTime()
@@ -41,33 +66,53 @@ size_t Machine::getWaitTime()
   return waitTime_;
 }
 
-void Machine::readIncomingBox(std::istream & in, size_t productTypes, size_t & idCounter)
+size_t Machine::getHandledTime()
 {
-  std::string currLine;
-  getline(in, currLine);
-  std::stringstream currStream(currLine);
+  return handledTime_;
+}
+
+size_t Machine::getUntilNextTime()
+{
+  return getTime(incomingBox_.front().getOperation()) - handledTime_; 
+}
+
+const Product & Machine::getCurrProd()
+{
+  return incomingBox_.front();
+}
+
+void Machine::readIncomingBox(std::stringstream & ss, size_t productTypes, size_t & idCounter)
+{
   int incomingLength = 0;
-  currStream >> incomingLength;
+  ss >> incomingLength;
   if (!aux::checkBounds(incomingLength, 0, 100000))
   {
-    throw std::logic_error(currLine);
+    ss.setstate(std::ios::failbit);
+    return;
   }
 
   int currOper = 0;
   for (size_t j = 0; j < incomingLength; ++j)
   {
-    currStream >> currOper;
+    ss >> currOper;
     if (!aux::checkBounds(currOper, 0, productTypes - 1))
     {
-      throw std::logic_error(currLine);
+      ss.setstate(std::ios::failbit);
+      return;      
     }
 
     incomingBox_.push(Product(idCounter++, currOper));
     waitTime_ += timeMtx_[currOper];
   }
-
-  if (!aux::checkStreams(in, currStream) && !aux::checkStreams(in, currStream, EOF))
-  {
-    throw std::logic_error(currLine);
-  }
 }
+
+bool Machine::isStarted()
+{
+  return isStarted_;
+}
+
+void Machine::setStarted(bool val)
+{
+  isStarted_ = val;
+}
+

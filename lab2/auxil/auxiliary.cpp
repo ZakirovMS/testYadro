@@ -10,9 +10,9 @@ bool aux::checkBounds(int num, int left, int right)
   return true;
 }
 
-bool aux::checkStreams(std::istream & in, std::stringstream & ss)
+bool aux::checkStreams(std::istream & in, std::stringstream & ss, char lastSymbol = '\n')
 {
-  if (in.fail() || ss.fail() || ss.peek() != '\n')
+  if (in.fail() || ss.fail() || ss.peek() != lastSymbol)
   {
     return false;
   }
