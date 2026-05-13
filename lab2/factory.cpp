@@ -1,31 +1,7 @@
 #include <sstream>
 #include <string>
+#include "factory.hpp"
 #include "machine.cpp"
-
-
-namespace
-{
-  bool checkBounds(int num, int left, int right)
-  {
-    if (num < left || num > right)
-    {
-      return false;
-    }
-
-    return true;
-  }
-}
-
-class Factory
-{
-public:
-  Factory(std::istream & in);
-private:
-  int productTypes_;
-  int machineQuantity_;
-  std::vector< Machine > machines_;
-  std::vector< Product > products_;
-};
 
 Factory::Factory(std::istream & in)
 {
@@ -34,11 +10,7 @@ Factory::Factory(std::istream & in)
   std::stringstream currStream(currLine);
   currStream >> productTypes_ >> machineQuantity_;
 
-  if (in.fail() || currStream.fail() || currStream.peek() != '\n')
-  {
-    throw std::logic_error(currLine);
-  }
-  else if (!checkBounds(productTypes_, 1, 100) || !checkBounds(machineQuantity_, 1, 100))
+  if (!aux::checkStreams(in, currStream) || !aux::checkBounds(productTypes_, 1, 100) || !aux::checkBounds(machineQuantity_, 1, 100))
   {
     throw std::logic_error(currLine);
   }
@@ -52,7 +24,7 @@ Factory::Factory(std::istream & in)
     for (size_t j = 0; j < machineQuantity_; ++j)
     {
       currStream >> currTime;
-      if (!checkBounds(currTime, 0, 10000))
+      if (!aux::checkBounds(currTime, 0, 10000))
       {
         throw std::logic_error(currLine);
       }
@@ -60,7 +32,7 @@ Factory::Factory(std::istream & in)
       machines_[j].setTime(i, currTime);
     }
 
-    if (in.fail() || currStream.fail() || !checkBounds(currTime, 0, 10000))
+    if (!aux::checkStreams(in, currStream))
     {
       throw std::logic_error(currLine);
     }
@@ -68,27 +40,10 @@ Factory::Factory(std::istream & in)
 
   size_t idCounter = 0;
   int productQuantity = 0;
+  size_t sumProductQuantity = 0;
   int productOper = 0;
   for (size_t i = 0; i < machineQuantity_; ++i)
   {
-    getline(in, currLine);
-    std::stringstream currStream(currLine);
-    currStream >> productQuantity;
-
-    for (size_t j = 0; j < productQuantity; ++j)
-    {
-      currStream >> productOper;
-      if (productOper < 0)
-      {
-        throw std::logic_error(currLine);
-      }
-
-      machines_[i].addProduct(Product(idCounter++, productOper));
-    }
-
-    if (in.fail() || currStream.fail() || productQuantity < 0)
-    {
-      throw std::logic_error(currLine);
-    }
+    machines_[i].readIncomingBox(in, productTypes_, idCounter);
   }
 }

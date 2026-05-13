@@ -3,35 +3,9 @@
 #include <vector>
 #include <sstream>
 #include <string>
+#include "machine.hpp"
 #include "product.cpp"
-
-namespace
-{
-  bool checkBounds(int num, int left, int right)
-  {
-    if (num < left || num > right)
-    {
-      return false;
-    }
-
-    return true;
-  }
-}
-
-class Machine
-{
-public:
-  Machine(size_t productTypes);
-  void setTime(size_t operPos, int time);
-  int getTime(size_t operPos);
-  void addProduct(Product nextPr);
-  Product handleProduct();
-  size_t getWaitTime();
-private:
-  size_t waitTime_;
-  std::queue< Product > incomingBox_;
-  std::vector< int > timeMtx_;
-};
+#include "auxil/auxiliary.hpp"
 
 Machine::Machine(size_t productTypes):
   timeMtx_(productTypes),
@@ -65,4 +39,34 @@ Product Machine::handleProduct()
 size_t Machine::getWaitTime()
 {
   return waitTime_;
+}
+
+void Machine::readIncomingBox(std::istream & in, size_t productTypes, size_t & idCounter)
+{
+  std::string currLine;
+  std::stringstream currStream(currLine);
+  int incomingLength = 0;
+  currStream >> incomingLength;
+  if (!aux::checkBounds(incomingLength, 0, 100000))
+  {
+    throw std::logic_error(currLine);
+  }
+
+  int currOper = 0;
+  for (size_t j = 0; j < incomingLength; ++j)
+  {
+    currStream >> currOper;
+    if (!aux::checkBounds(currOper, 0, productTypes))
+    {
+      throw std::logic_error(currLine);
+    }
+
+    incomingBox_.push(Product(idCounter++, currOper));
+    waitTime_ += timeMtx_[currOper];
+  }
+
+  if (!aux::checkStreams(in, currStream))
+  {
+    throw std::logic_error(currLine);
+  }
 }
