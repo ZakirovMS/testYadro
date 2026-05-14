@@ -1,5 +1,5 @@
 all:
-	g++ -o result main.cpp machine.cpp factory.cpp product.cpp auxil/auxiliary.cpp auxil/outStructs.cpp
+	g++ -o result main.cpp machine.cpp factory.cpp product.cpp auxil/checkers.cpp auxil/outStructs.cpp
 
 run: result
 	@if [ -z "$(path)" ]; \
