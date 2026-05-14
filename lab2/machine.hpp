@@ -12,19 +12,22 @@ class Machine
 {
 public:
   Machine(size_t productTypes);
-  void setTime(size_t operPos, int time);
-  int getTime(size_t operPos);
+
   void addProduct(Product nextPr);
   std::optional< Product > handleProduct(size_t time);
-  bool isIncomingBoxEmpty();
-  size_t getIncomingBoxSize();
-  size_t getWaitTime();
-  size_t getHandledTime();
-  size_t getUntilNextTime();
-  const Product & getCurrProd();
-  bool isStarted();
+  void readIncomingBox(std::istream & in, size_t productTypes, size_t & idCounter);
+
+  bool isStarted() const;
+  bool isIncomingBoxEmpty() const;
   void setStarted(bool val);
-  void readIncomingBox(std::stringstream & ss, size_t productTypes, size_t & idCounter);
+  void setTime(size_t operPos, int time);
+  int getTime(size_t operPos) const;
+  size_t getIncomingBoxSize() const;
+  size_t getWaitTime() const;
+  size_t getHandledTime() const;
+  size_t getUntilNextTime() const;
+  const Product & getCurrProd() const;
+
 private:
   size_t waitTime_;
   std::queue< Product > incomingBox_;

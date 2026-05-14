@@ -5,14 +5,16 @@
 
 int main(int argc, char* argv[])
 {
-  if (argc != 2) {
-    std::cerr << "Usage: " << argv[0] << " <input file>" << '\n';
+  if (argc != 2)
+  {
+    std::cerr << "Error in arguments" << '\n';
     return 1;
   }
 
   std::ifstream inFile(argv[1]);
-  if (!inFile) {
-    std::cerr << "Error: cannot open file " << argv[1] << '\n';
+  if (!inFile)
+  {
+    std::cerr << "Error in file opening" << '\n';
     return 1;
   }
 
@@ -23,8 +25,7 @@ int main(int argc, char* argv[])
     {
       factory.handleUntilNext(std::cout);
     }
-
-    factory.handleUntilNext(std::cout);
+    std::cout << '\n';
   }
   catch (const std::logic_error & e)
   {

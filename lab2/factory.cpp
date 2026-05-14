@@ -5,12 +5,12 @@
 #include <utility>
 #include "factory.hpp"
 #include "machine.hpp"
-#include "auxil/auxiliary.hpp"
-#include "outStructs.hpp"
+#include "auxil/checkers.hpp"
+#include "auxil/outStructs.hpp"
 
 Factory::Factory(std::istream & in):
   currTime_(0),
-  timeUntilNext_(0),
+  timeUntilNext_(std::numeric_limits< size_t >::max()),
   end_(false)
 {
   std::string currLine;
@@ -47,23 +47,13 @@ Factory::Factory(std::istream & in):
   }
 
   size_t idCounter = 0;
-  for (size_t i = 0; i < machinesQuantity_ - 1; ++i)
+  for (size_t i = 0; i < machinesQuantity_; ++i)
   {
-    getline(in, currLine);
-    currStream.str(currLine);
-    machines_[i].readIncomingBox(currStream, prodTypes_, idCounter);
-    if (!aux::checkStreams(in, currStream))
+    machines_[i].readIncomingBox(in, prodTypes_, idCounter);
+    if (timeUntilNext_ > machines_[i].getUntilNextTime())
     {
-      throw(currLine);
+      timeUntilNext_ = machines_[i].getUntilNextTime();
     }
-  }
-
-  getline(in, currLine);
-  currStream.str(currLine);
-  machines_[machinesQuantity_ - 1].readIncomingBox(currStream, prodTypes_, idCounter);
-  if (!aux::checkStreams(in, currStream, EOF))
-  {
-    throw(currLine);
   }
 
   if (idCounter > 100000)
@@ -76,16 +66,13 @@ void Factory::handleUntilNext(std::ostream & out)
 {
   if (timeUntilNext_ == std::numeric_limits< size_t >::max())
   {
-    reportType(out, prevStructs_.finishProds, "finish");
-    reportType(out, prevStructs_.startProds, "start");
-    reportType(out, prevStructs_.waitProds, "wait");
-    reportType(out, prevStructs_.readyProds, "ready");
+    aux::reportStruct(out, prevStructs_);
     out << "stop " << currTime_;
     end_ = true;
     return;
   }
 
-  UnifiedStruct currStructs;
+  aux::UnifiedStruct currStructs;
   std::optional< Product > handled = std::nullopt;
   size_t newTimeUntilNext = std::numeric_limits< size_t >::max();
   for (size_t i = 0; i < machinesQuantity_; ++i)
@@ -94,7 +81,7 @@ void Factory::handleUntilNext(std::ostream & out)
     {
       continue;
     }
-    
+
     if (machines_[i].getHandledTime() == 0 && !machines_[i].isStarted())
     {
       const Product & started = machines_[i].getCurrProd();
@@ -108,24 +95,15 @@ void Factory::handleUntilNext(std::ostream & out)
     handled = machines_[i].handleProduct(timeUntilNext_);
     if (handled != std::nullopt)
     {
-      const Product & finished = machines_[i].getCurrProd();
-      currStructs.finishProds.push_back({currTime_ + timeUntilNext_, finished.getId(), finished.getOperation(), i});
+      const Product & finished = handled.value();
+      currStructs.finishProds.push_back({currTime_ + timeUntilNext_, finished.getId(), finished.getOperation() - 1, i});
       if (finished.getOperation() == prodTypes_ - 1)
       {
         currStructs.readyProds.push_back({currTime_ + timeUntilNext_, finished.getId(), i});
       }
       else
       {
-        size_t minTime = std::numeric_limits< size_t >::max();
-        size_t mcID = std::numeric_limits< size_t >::max();
-        for (size_t j = 0; j < machinesQuantity_; ++j)
-        {
-          if (minTime > machines_[j].getWaitTime())
-          {
-            minTime = machines_[j].getWaitTime();
-            mcID = j;
-          }
-        }
+        size_t mcID = selectOptimalMachine();
 
         if (!machines_[mcID].isIncomingBoxEmpty())
         {
@@ -148,21 +126,18 @@ void Factory::handleUntilNext(std::ostream & out)
     }
   }
 
-  reportType(out, prevStructs_.finishProds, "finish");
-  reportType(out, prevStructs_.startProds, "start");
-  reportType(out, prevStructs_.waitProds, "wait");
-  reportType(out, prevStructs_.readyProds, "ready");
+  aux::reportStruct(out, prevStructs_);
   std::swap(currStructs, prevStructs_);
   currTime_ += timeUntilNext_;
   timeUntilNext_ = newTimeUntilNext;
 }
 
-bool Factory::isEnd()
+bool Factory::isEnd() const
 {
   return end_;
 }
 
-void Factory::correctInsert(std::list< EdgeStruct > & str, EdgeStruct ins) {
+void Factory::correctInsert(std::list< aux::EdgeStruct > & str, aux::EdgeStruct ins) {
     auto it = str.begin();
     while (it != str.end() && it->id < ins.id)
     {
@@ -170,4 +145,20 @@ void Factory::correctInsert(std::list< EdgeStruct > & str, EdgeStruct ins) {
     }
 
     str.insert(it, ins);
+}
+
+size_t Factory::selectOptimalMachine() const
+{
+  size_t minTime = std::numeric_limits< size_t >::max();
+  size_t mcID = std::numeric_limits< size_t >::max();
+  for (size_t j = 0; j < machinesQuantity_; ++j)
+  {
+    if (minTime > machines_[j].getWaitTime())
+    {
+      minTime = machines_[j].getWaitTime();
+      mcID = j;
+    }
+  }
+
+  return mcID;
 }

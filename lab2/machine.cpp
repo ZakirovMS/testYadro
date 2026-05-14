@@ -5,7 +5,7 @@
 #include <string>
 #include "machine.hpp"
 #include "product.hpp"
-#include "auxil/auxiliary.hpp"
+#include "auxil/checkers.hpp"
 
 Machine::Machine(size_t productTypes):
   timeMtx_(productTypes),
@@ -13,16 +13,6 @@ Machine::Machine(size_t productTypes):
   handledTime_(0),
   isStarted_(false)
 {}
-
-void Machine::setTime(size_t operPos, int time)
-{
-  timeMtx_[operPos] = time;
-}
-
-int Machine::getTime(size_t operPos)
-{
-  return timeMtx_[operPos];
-}
 
 void Machine::addProduct(Product nextPr)
 {
@@ -51,64 +41,45 @@ std::optional< Product > Machine::handleProduct(size_t time)
   return std::nullopt;
 }
 
-bool Machine::isIncomingBoxEmpty()
+void Machine::readIncomingBox(std::istream & in, size_t productTypes, size_t & idCounter)
 {
-  return incomingBox_.empty();
-}
-
-size_t Machine::getIncomingBoxSize()
-{
-  return incomingBox_.size();
-}
-
-size_t Machine::getWaitTime()
-{
-  return waitTime_;
-}
-
-size_t Machine::getHandledTime()
-{
-  return handledTime_;
-}
-
-size_t Machine::getUntilNextTime()
-{
-  return getTime(incomingBox_.front().getOperation()) - handledTime_; 
-}
-
-const Product & Machine::getCurrProd()
-{
-  return incomingBox_.front();
-}
-
-void Machine::readIncomingBox(std::stringstream & ss, size_t productTypes, size_t & idCounter)
-{
+  std::string currLine;
+  getline(in, currLine);
+  std::stringstream currStream(currLine);
   int incomingLength = 0;
-  ss >> incomingLength;
+  currStream >> incomingLength;
   if (!aux::checkBounds(incomingLength, 0, 100000))
   {
-    ss.setstate(std::ios::failbit);
-    return;
+    throw std::logic_error(currLine);
   }
 
   int currOper = 0;
   for (size_t j = 0; j < incomingLength; ++j)
   {
-    ss >> currOper;
+    currStream >> currOper;
     if (!aux::checkBounds(currOper, 0, productTypes - 1))
     {
-      ss.setstate(std::ios::failbit);
-      return;      
+      throw std::logic_error(currLine);   
     }
 
     incomingBox_.push(Product(idCounter++, currOper));
     waitTime_ += timeMtx_[currOper];
   }
+
+  if (!aux::checkStreams(in, currStream))
+  {
+    throw std::logic_error(currLine);
+  }
 }
 
-bool Machine::isStarted()
+bool Machine::isStarted() const
 {
   return isStarted_;
+}
+
+bool Machine::isIncomingBoxEmpty() const
+{
+  return incomingBox_.empty();
 }
 
 void Machine::setStarted(bool val)
@@ -116,3 +87,37 @@ void Machine::setStarted(bool val)
   isStarted_ = val;
 }
 
+void Machine::setTime(size_t operPos, int time)
+{
+  timeMtx_[operPos] = time;
+}
+
+int Machine::getTime(size_t operPos) const
+{
+  return timeMtx_[operPos];
+}
+
+size_t Machine::getIncomingBoxSize() const
+{
+  return incomingBox_.size();
+}
+
+size_t Machine::getWaitTime() const
+{
+  return waitTime_;
+}
+
+size_t Machine::getHandledTime() const
+{
+  return handledTime_;
+}
+
+size_t Machine::getUntilNextTime() const
+{
+  return getTime(incomingBox_.front().getOperation()) - handledTime_; 
+}
+
+const Product & Machine::getCurrProd() const
+{
+  return incomingBox_.front();
+}

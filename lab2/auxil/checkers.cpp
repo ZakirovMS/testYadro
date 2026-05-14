@@ -1,4 +1,4 @@
-#include "auxiliary.hpp"
+#include "checkers.hpp"
 
 bool aux::checkBounds(int num, int left, int right)
 {
