@@ -15,6 +15,7 @@ public:
 
   void addProduct(Product nextPr);
   std::optional< Product > handleProduct(size_t time);
+  void initiateHandle();
   void readIncomingBox(std::istream & in, size_t productTypes, size_t & idCounter);
 
   bool isStarted() const;
@@ -26,11 +27,12 @@ public:
   size_t getWaitTime() const;
   size_t getHandledTime() const;
   size_t getUntilNextTime() const;
-  const Product & getCurrProd() const;
+  const std::optional< Product > & getCurrProd() const;
 
 private:
   size_t waitTime_;
   std::queue< Product > incomingBox_;
+  std::optional< Product > currentProduct_;
   std::vector< int > timeMtx_;
   size_t handledTime_;
   bool isStarted_;

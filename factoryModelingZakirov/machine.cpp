@@ -16,10 +16,18 @@ Machine::Machine(size_t productTypes):
 
 void Machine::addProduct(Product nextPr)
 {
-  incomingBox_.push(nextPr);
-  waitTime_ += timeMtx_[nextPr.getOperation()];
+  if (!currentProduct_.has_value())
+  {
+    currentProduct_ = nextPr;
+  }
+  else
+  {
+    incomingBox_.push(nextPr);
+    waitTime_ += getTime(nextPr.getOperation());
+  }
 }
 
+/*
 std::optional< Product > Machine::handleProduct(size_t time)
 {
   handledTime_ += time;
@@ -39,6 +47,42 @@ std::optional< Product > Machine::handleProduct(size_t time)
   }
 
   return std::nullopt;
+}
+*/
+
+std::optional< Product > Machine::handleProduct(size_t time)
+{
+  if (!currentProduct_.has_value())
+  {
+    return std::nullopt;
+  }
+
+  handledTime_ += time;
+  if (handledTime_ == getTime(currentProduct_.value().getOperation()))
+  {
+    Product processed = currentProduct_.value();
+    currentProduct_ = std::nullopt;
+    processed.execOperation();
+    handledTime_ = 0;
+    return processed;
+  }
+  else if (handledTime_ > getTime(currentProduct_.value().getOperation()))
+  {
+
+    throw std::logic_error("Error: more time has passed than required");
+  }
+
+  return std::nullopt;
+}
+
+void Machine::initiateHandle()
+{
+  if (!isIncomingBoxEmpty() && !currentProduct_.has_value())
+  {
+    currentProduct_ = incomingBox_.front();
+    incomingBox_.pop();
+    waitTime_ -= getTime(currentProduct_.value().getOperation());
+  }
 }
 
 void Machine::readIncomingBox(std::istream & in, size_t productTypes, size_t & idCounter)
@@ -62,8 +106,7 @@ void Machine::readIncomingBox(std::istream & in, size_t productTypes, size_t & i
       throw std::logic_error(currLine);   
     }
 
-    incomingBox_.push(Product(idCounter++, currOper));
-    waitTime_ += timeMtx_[currOper];
+    addProduct(Product(idCounter++, currOper));
   }
 
   if (!aux::checkStreams(in, currStream))
@@ -114,10 +157,15 @@ size_t Machine::getHandledTime() const
 
 size_t Machine::getUntilNextTime() const
 {
-  return getTime(incomingBox_.front().getOperation()) - handledTime_; 
+  if (currentProduct_.has_value())
+  {
+    return getTime(currentProduct_.value().getOperation()) - handledTime_; 
+  }
+
+  throw std::logic_error("No products in the  machine");
 }
 
-const Product & Machine::getCurrProd() const
+const std::optional< Product > & Machine::getCurrProd() const
 {
-  return incomingBox_.front();
+  return currentProduct_;
 }

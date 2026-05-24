@@ -64,7 +64,7 @@ Factory::Factory(std::istream & in):
 
 void Factory::handleUntilNext(std::ostream & out)
 {
-  if (timeUntilNext_ == std::numeric_limits< size_t >::max())
+  if (timeUntilNext_ == std::numeric_limits< size_t >::max()) // Если до следующего inf, выходим
   {
     aux::reportStruct(out, prevStructs_);
     out << "stop " << currTime_;
@@ -77,14 +77,14 @@ void Factory::handleUntilNext(std::ostream & out)
   size_t newTimeUntilNext = std::numeric_limits< size_t >::max();
   for (size_t i = 0; i < machinesQuantity_; ++i)
   {
-    if (machines_[i].isIncomingBoxEmpty())
+    if (machines_[i].getCurrProd() == std::nullopt)
     {
       continue;
     }
 
     if (machines_[i].getHandledTime() == 0 && !machines_[i].isStarted())
     {
-      const Product & started = machines_[i].getCurrProd();
+      const Product & started = machines_[i].getCurrProd().value();
       correctInsert(prevStructs_.startProds, {currTime_, started.getId(), started.getOperation(), i});
     }
     else if (machines_[i].isStarted())
@@ -105,22 +105,13 @@ void Factory::handleUntilNext(std::ostream & out)
       {
         size_t mcID = selectOptimalMachine();
 
-        if (!machines_[mcID].isIncomingBoxEmpty())
-        {
-          currStructs.waitProds.push_back({currTime_ + timeUntilNext_, finished.getId(), finished.getOperation(),
-            mcID, machines_[mcID].getIncomingBoxSize()});
-        }
-        else
-        {
-          correctInsert(currStructs.startProds, {currTime_ + timeUntilNext_, finished.getId(), finished.getOperation(), mcID});
-          machines_[mcID].setStarted(true);
-        }
-
+        currStructs.waitProds.push_back({currTime_ + timeUntilNext_, finished.getId(), finished.getOperation(), mcID, machines_[mcID].getIncomingBoxSize()});
         machines_[mcID].addProduct(finished);
       }
     }
 
-    if (!machines_[i].isIncomingBoxEmpty() && newTimeUntilNext > machines_[i].getUntilNextTime())
+    machines_[i].initiateHandle();
+    if (machines_[i].getCurrProd() != std::nullopt && newTimeUntilNext > machines_[i].getUntilNextTime())
     {
       newTimeUntilNext = machines_[i].getUntilNextTime();
     }
@@ -137,14 +128,15 @@ bool Factory::isEnd() const
   return end_;
 }
 
-void Factory::correctInsert(std::list< aux::EdgeStruct > & str, aux::EdgeStruct ins) {
-    auto it = str.begin();
-    while (it != str.end() && it->id < ins.id)
-    {
-        ++it;
-    }
+void Factory::correctInsert(std::list< aux::EdgeStruct > & str, aux::EdgeStruct ins)
+{
+  auto it = str.begin();
+  while (it != str.end() && it->id < ins.id)
+  {
+    ++it;
+  }
 
-    str.insert(it, ins);
+  str.insert(it, ins);
 }
 
 size_t Factory::selectOptimalMachine() const
