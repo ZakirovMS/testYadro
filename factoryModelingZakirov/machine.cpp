@@ -27,29 +27,6 @@ void Machine::addProduct(Product nextPr)
   }
 }
 
-/*
-std::optional< Product > Machine::handleProduct(size_t time)
-{
-  handledTime_ += time;
-  Product processed = incomingBox_.front();
-  
-  if (handledTime_ == getTime(incomingBox_.front().getOperation()))
-  {
-    incomingBox_.pop();
-    waitTime_ -= handledTime_;
-    processed.execOperation();
-    handledTime_ = 0;
-    return processed;
-  }
-  else if (time > getTime(processed.getOperation()))
-  {
-    throw std::logic_error("Error: more time has passed than required");
-  }
-
-  return std::nullopt;
-}
-*/
-
 std::optional< Product > Machine::handleProduct(size_t time)
 {
   if (!currentProduct_.has_value())
@@ -162,7 +139,7 @@ size_t Machine::getUntilNextTime() const
     return getTime(currentProduct_.value().getOperation()) - handledTime_; 
   }
 
-  throw std::logic_error("No products in the  machine");
+  throw std::logic_error("No products in the machine");
 }
 
 const std::optional< Product > & Machine::getCurrProd() const

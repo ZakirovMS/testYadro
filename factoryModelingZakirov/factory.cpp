@@ -50,6 +50,11 @@ Factory::Factory(std::istream & in):
   for (size_t i = 0; i < machinesQuantity_; ++i)
   {
     machines_[i].readIncomingBox(in, prodTypes_, idCounter);
+    if (machines_[i].getCurrProd() == std::nullopt)
+    {
+      continue;
+    }
+
     if (timeUntilNext_ > machines_[i].getUntilNextTime())
     {
       timeUntilNext_ = machines_[i].getUntilNextTime();
@@ -64,7 +69,7 @@ Factory::Factory(std::istream & in):
 
 void Factory::handleUntilNext(std::ostream & out)
 {
-  if (timeUntilNext_ == std::numeric_limits< size_t >::max()) // Если до следующего inf, выходим
+  if (timeUntilNext_ == std::numeric_limits< size_t >::max())
   {
     aux::reportStruct(out, prevStructs_);
     out << "stop " << currTime_;
