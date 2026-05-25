@@ -11,7 +11,7 @@ run: result
 	./result $(path)
 
 run-def: result
-	./result factoryModeling/src/data.txt   # если data.txt лежит относительно текущей папки (там, где Makefile)
+	./result factoryModeling/src/data.txt
 
 run-folder: result
 	@if [ -z "$(folder)" ]; then \
